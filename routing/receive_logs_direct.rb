@@ -5,18 +5,22 @@ connection = Bunny.new
 connection.start
 
 channel = connection.create_channel
-exchange = channel.fanout('logs')
+exchange = channel.direct('logs')
 queue = channel.queue('', exclusive: true)
 
-queue.bind(exchange)
+ARGV.each do |severity|
+  queue.bind('logs', routing_key: severity)
+end
 
-puts ' [*] Waiting for messages. To exit press CTRL+C'
+puts ' [*] Waiting for logs. To exit press CTRL+C'
 
 begin
-  queue.subscribe(block: true) do |_delivery_info, _properties, body|
-    puts " [x] #{body}"
+  queue.subscribe(block: true) do |delivery_info, _properties, body|
+    puts " [x] #{delivery_info.routing_key}:#{body}"
   end
 rescue Interrupt => _
   channel.close
   connection.close
+
+  exit(0)
 end
