@@ -1,11 +1,13 @@
 #!/usr/bin/env ruby
 require 'bunny'
 
+abort "Usage: #{$PROGRAM_NAME} [binding key]" if ARGV.empty?
+
 connection = Bunny.new
 connection.start
 
 channel = connection.create_channel
-exchange = channel.direct('logs')
+exchange = channel.topic('topic_logs')
 queue = channel.queue('', exclusive: true)
 
 ARGV.each do |severity|
